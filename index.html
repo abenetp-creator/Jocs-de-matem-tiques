@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Decimals - Valencià</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 700px; text-align: center; }
+        
+        /* Selectors */
+        .mode-selector { display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; }
+        .btn-mode { background: #eee; border: 2px solid #ccc; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-mode.active { background: #34495e; color: white; border-color: #2c3e50; }
+
+        /* Operació Principal */
+        .horizontal-box { font-size: 2.2rem; margin-bottom: 25px; padding: 25px; background: #eef7ff; border-radius: 12px; border: 2px solid #3498db; }
+        input { width: 160px; font-size: 2rem; padding: 5px; border: 2px solid #bdc3c7; border-radius: 8px; text-align: center; }
+
+        /* --- QUADRÍCULA D'ALINEACIÓ ESTRICTA --- */
+        .vertical-container { 
+            display: inline-block;
+            background: #fff;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .row { display: flex; justify-content: flex-end; align-items: center; height: 50px; }
+        
+        .digit { 
+            width: 35px; /* Ample fix per a cada xifra */
+            font-family: 'Courier New', monospace; 
+            font-size: 3rem; 
+            font-weight: bold;
+            text-align: center;
+        }
+        .comma { 
+            width: 20px; /* Ample fix per a la coma */
+            font-family: 'Courier New', monospace; 
+            font-size: 3rem; 
+            font-weight: bold;
+            color: #e74c3c;
+            text-align: center;
+        }
+        .operator { 
+            width: 40px; 
+            font-size: 2.5rem; 
+            color: #e67e22; 
+            font-family: 'Courier New', monospace;
+            text-align: center;
+        }
+        .linea { border-top: 5px solid #333; margin: 10px 0; width: 100%; }
+        /* --------------------------------------- */
+        
+        .btn-main { padding: 15px 30px; font-size: 1.2rem; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; margin: 5px; color: white; transition: 0.2s; }
+        .btn-check { background: #3498db; }
+        .btn-next { background: #2ecc71; }
+        .btn-main:hover { opacity: 0.8; transform: translateY(-2px); }
+
+        .feedback { margin: 20px; font-size: 1.4rem; font-weight: bold; min-height: 1.5em; }
+        .hidden { display: none !important; }
+        .ghost { color: #eee; } /* Ceros de farciment */
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>Practica amb Decimals</h1>
+    <p>Tria operació i escriu el resultat amb coma (,)</p>
+    
+    <div class="mode-selector">
+        <button id="m-sum" class="btn-mode active" onclick="setMode('sum')">Sumes</button>
+        <button id="m-sub" class="btn-mode" onclick="setMode('sub')">Restes</button>
+        <button id="m-rand" class="btn-mode" onclick="setMode('rand')">Mesclat</button>
+    </div>
+
+    <div class="horizontal-box">
+        <span id="h-n1">0</span> <span id="h-op">+</span> <span id="h-n2">0</span> = 
+        <input type="text" id="user-ans" autocomplete="off" placeholder="?">
+    </div>
+
+    <button class="btn-main btn-check" onclick="check()">Comprova</button>
+    <button class="btn-main btn-next" onclick="generate()">Següent</button>
+
+    <div id="msg" class="feedback"></div>
+
+    <div id="sol-box" class="hidden">
+        <hr>
+        <p><strong>Alineació matemàtica:</strong></p>
+        <div class="vertical-container" id="v-container">
+            </div>
+    </div>
+</div>
+
+<script>
+    let n1, n2, opType, result;
+    let currentMode = 'sum';
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.getElementById('m-sum').className = (mode === 'sum' ? 'btn-mode active' : 'btn-mode');
+        document.getElementById('m-sub').className = (mode === 'sub' ? 'btn-mode active' : 'btn-mode');
+        document.getElementById('m-rand').className = (mode === 'rand' ? 'btn-mode active' : 'btn-mode');
+        generate();
+    }
+
+    function generate() {
+        // Generem números amb diferent quantitat de decimals (1 a 3)
+        n1 = parseFloat((Math.random() * 9990 + 5).toFixed(Math.floor(Math.random() * 3) + 1));
+        n2 = parseFloat((Math.random() * 9990 + 5).toFixed(Math.floor(Math.random() * 3) + 1));
+
+        if (currentMode === 'sum') opType = '+';
+        else if (currentMode === 'sub') opType = '-';
+        else opType = Math.random() > 0.5 ? '+' : '-';
+
+        if (opType === '-' && n1 < n2) [n1, n2] = [n2, n1];
+
+        result = (opType === '+' ? n1 + n2 : n1 - n2);
+        result = Math.round(result * 1000) / 1000;
+
+        document.getElementById('h-n1').innerText = n1.toString().replace('.', ',');
+        document.getElementById('h-n2').innerText = n2.toString().replace('.', ',');
+        document.getElementById('h-op').innerText = opType;
+        document.getElementById('user-ans').value = '';
+        document.getElementById('msg').innerText = '';
+        document.getElementById('sol-box').classList.add('hidden');
+    }
+
+    function createRow(number, symbol = "") {
+        const container = document.getElementById('v-container');
+        const row = document.createElement('div');
+        row.className = 'row';
+
+        let [intPart, decPart = ""] = number.toString().split('.');
+        
+        // 1. Símbol (+ o -)
+        const symDiv = document.createElement('div');
+        symDiv.className = 'operator';
+        symDiv.innerText = symbol;
+        row.appendChild(symDiv);
+
+        // 2. Part entera (max 5 dígits per seguretat)
+        for (let i = 0; i < (5 - intPart.length); i++) {
+            const empty = document.createElement('div');
+            empty.className = 'digit';
+            row.appendChild(empty);
+        }
+        for (let d of intPart) {
+            const dig = document.createElement('div');
+            dig.className = 'digit';
+            dig.innerText = d;
+            row.appendChild(dig);
+        }
+
+        // 3. Coma
+        const coma = document.createElement('div');
+        coma.className = 'comma';
+        coma.innerText = ',';
+        row.appendChild(coma);
+
+        // 4. Part decimal (sempre 3 espais per alinear)
+        for (let i = 0; i < 3; i++) {
+            const dig = document.createElement('div');
+            dig.className = 'digit';
+            if (decPart[i] !== undefined) {
+                dig.innerText = decPart[i];
+            } else {
+                dig.innerText = '0';
+                dig.classList.add('ghost');
+            }
+            row.appendChild(dig);
+        }
+
+        container.appendChild(row);
+    }
+
+    function check() {
+        const userIn = document.getElementById('user-ans').value.replace(',', '.');
+        const userVal = parseFloat(userIn);
+        const msg = document.getElementById('msg');
+        
+        if (!isNaN(userVal) && Math.abs(userVal - result) < 0.001) {
+            msg.innerText = "¡Molt bé! Resposta correcta.";
+            msg.style.color = "#2ecc71";
+        } else {
+            msg.innerText = "Error. Fixa't en les columnes:";
+            msg.style.color = "#e74c3c";
+        }
+
+        const container = document.getElementById('v-container');
+        container.innerHTML = ''; // Netejar
+
+        createRow(n1);
+        createRow(n2, opType);
+        
+        const l = document.createElement('div');
+        l.className = 'linea';
+        container.appendChild(l);
+        
+        createRow(result);
+
+        document.getElementById('sol-box').classList.remove('hidden');
+    }
+
+    window.onload = generate;
+</script>
+</body>
+</html>
